@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { GeoJSON, LineLayer, MapLibre } from "svelte-maplibre";
+  import { GeoJSON, LineLayer, MapLibre, Popup } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
 
   let sampleData;
@@ -23,7 +23,17 @@
     >
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
-          <LineLayer paint={{ "line-width": 5, "line-color": "red" }} />
+          <LineLayer paint={{ "line-width": 5, "line-color": "red" }}>
+            <Popup openOn="hover" let:features>
+              <table>
+                <tbody>
+                  {#each Object.entries(features[0].properties) as [key, value]}
+                    <tr><td>{key}</td><td>{value}</td></tr>
+                  {/each}
+                </tbody>
+              </table>
+            </Popup>
+          </LineLayer>
         </GeoJSON>
       {/if}
     </MapLibre>
