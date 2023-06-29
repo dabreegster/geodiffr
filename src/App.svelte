@@ -2,6 +2,7 @@
   import { onMount } from "svelte";
   import { GeoJSON, LineLayer, MapLibre, Popup } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
+  import PropertiesTable from "./PropertiesTable.svelte";
 
   let sampleData;
   onMount(async () => {
@@ -13,6 +14,14 @@
 <Layout>
   <div slot="left">
     <h1>GeoDiffr</h1>
+    {#if sampleData}
+      {#each sampleData.features as f}
+        <details>
+          <summary>{f.properties.name ?? f.properties["@id"]}</summary>
+          <PropertiesTable properties={f.properties} />
+        </details>
+      {/each}
+    {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
     <MapLibre
@@ -25,13 +34,7 @@
         <GeoJSON id="data" data={sampleData}>
           <LineLayer paint={{ "line-width": 5, "line-color": "red" }}>
             <Popup openOn="hover" let:features>
-              <table>
-                <tbody>
-                  {#each Object.entries(features[0].properties) as [key, value]}
-                    <tr><td>{key}</td><td>{value}</td></tr>
-                  {/each}
-                </tbody>
-              </table>
+              <PropertiesTable properties={features[0].properties} />
             </Popup>
           </LineLayer>
         </GeoJSON>
