@@ -8,10 +8,18 @@
   let sampleData;
   onMount(async () => {
     let resp = await fetch("/geodiffr/overpass_example.geojson");
-    sampleData = await resp.json();
+    let gj = await resp.json();
+    // Assign our own IDs, excluding 0
+    var id = 1;
+    for (let f of gj.features) {
+      f.id = id++;
+    }
+    sampleData = gj;
   });
 
   let map;
+
+  let accordionDivs = {};
 
   function zoomTo(feature) {
     map?.fitBounds(bbox(feature), {
@@ -20,19 +28,31 @@
       duration: 500,
     });
   }
+
+  function toggleSidebar(ev, f) {
+    if (ev.target.open) {
+      zoomTo(f);
+    }
+  }
+
+  function openFromMap(ev) {
+    let f = ev.detail.features?.[0];
+    if (f) {
+      accordionDivs[f.id].open = true;
+      accordionDivs[f.id].scrollIntoView({ behavior: "smooth" });
+    }
+  }
 </script>
 
 <Layout>
   <div slot="left">
     <h1>GeoDiffr</h1>
     {#if sampleData}
-      {#each sampleData.features as f}
+      <p>{sampleData.features.length} objects</p>
+      {#each sampleData.features as f (f.id)}
         <details
-          on:toggle={(ev) => {
-            if (ev.target.open) {
-              zoomTo(f);
-            }
-          }}
+          bind:this={accordionDivs[f.id]}
+          on:toggle={(ev) => toggleSidebar(ev, f)}
         >
           <summary>{f.properties.name ?? f.properties["@id"]}</summary>
           <PropertiesTable properties={f.properties} />
@@ -50,7 +70,11 @@
     >
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
-          <LineLayer paint={{ "line-width": 5, "line-color": "red" }}>
+          <LineLayer
+            paint={{ "line-width": 5, "line-color": "red" }}
+            on:click={openFromMap}
+          >
+            >
             <Popup openOn="hover" let:features>
               <PropertiesTable properties={features[0].properties} />
             </Popup>
