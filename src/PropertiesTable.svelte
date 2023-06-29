@@ -9,3 +9,9 @@
     {/each}
   </tbody>
 </table>
+
+<style>
+  table {
+    border: solid;
+  }
+</style>

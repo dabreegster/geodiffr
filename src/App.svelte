@@ -3,12 +3,23 @@
   import { GeoJSON, LineLayer, MapLibre, Popup } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
+  import { bbox } from "./utils";
 
   let sampleData;
   onMount(async () => {
     let resp = await fetch("/geodiffr/overpass_example.geojson");
     sampleData = await resp.json();
   });
+
+  let map;
+
+  function zoomTo(feature) {
+    map?.fitBounds(bbox(feature), {
+      padding: 20,
+      animate: true,
+      duration: 500,
+    });
+  }
 </script>
 
 <Layout>
@@ -16,7 +27,13 @@
     <h1>GeoDiffr</h1>
     {#if sampleData}
       {#each sampleData.features as f}
-        <details>
+        <details
+          on:toggle={(ev) => {
+            if (ev.target.open) {
+              zoomTo(f);
+            }
+          }}
+        >
           <summary>{f.properties.name ?? f.properties["@id"]}</summary>
           <PropertiesTable properties={f.properties} />
         </details>
@@ -29,6 +46,7 @@
       center={[-0.1095, 51.5076]}
       zoom={13}
       standardControls
+      bind:map
     >
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
