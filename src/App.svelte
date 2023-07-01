@@ -1,6 +1,12 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { GeoJSON, LineLayer, MapLibre, Popup } from "svelte-maplibre";
+  import {
+    GeoJSON,
+    hoverStateFilter,
+    LineLayer,
+    MapLibre,
+    Popup,
+  } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import { bbox } from "./utils";
@@ -71,7 +77,12 @@
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
           <LineLayer
-            paint={{ "line-width": 5, "line-color": "red" }}
+            manageHoverState
+            paint={{
+              "line-width": 5,
+              "line-color": "red",
+              "line-opacity": hoverStateFilter(1.0, 0.5),
+            }}
             on:click={openFromMap}
           >
             >
