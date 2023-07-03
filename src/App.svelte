@@ -11,7 +11,7 @@
   import Layout from "./Layout.svelte";
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
   import MapSidebar from "./map_sidebar/MapSidebar.svelte";
-  import { formOpen, mapHover } from "./map_sidebar/stores";
+  import { activeFeature, mapHover } from "./map_sidebar/stores";
   import PropertiesTable from "./PropertiesTable.svelte";
 
   let sampleData: FeatureCollection;
@@ -59,7 +59,7 @@
               "line-color": "red",
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
-            on:click={(e) => formOpen.set(e.detail.features[0].id)}
+            on:click={(e) => activeFeature.set(e.detail.features[0])}
             bind:hovered={$mapHover}
           >
             >

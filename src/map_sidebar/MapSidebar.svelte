@@ -7,7 +7,7 @@
   // This ties together AccordionItems with objects drawn somewhere on a map,
   // in the following ways:
   //
-  // 1) Zero or one objects can be active at a time. formOpen (TODO rename) specifies this.
+  // 1) Zero or one objects can be active at a time. activeFeature specifies this.
   // 2) The current active object is drawn with special styling on the map.
   // 3) Clicking empty space on the map deselects the active object.
   // 4) Hovering on something in the sidebar also shows a hover effect in the map.

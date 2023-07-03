@@ -1,7 +1,12 @@
 <script lang="ts">
   import type { Feature } from "geojson";
   import { slide } from "svelte/transition";
-  import { formOpen, mapHover, openFromSidebar, sidebarHover } from "./stores";
+  import {
+    activeFeature,
+    mapHover,
+    openFromSidebar,
+    sidebarHover,
+  } from "./stores";
 
   // IDs must be numeric
   // TODO Be careful with mutations to this. A reason to stick to IDs?
@@ -10,16 +15,16 @@
 
   let id = feature.id as number;
 
-  $: isOpen = $formOpen == id;
+  $: isOpen = $activeFeature?.id == id;
   const toggle = () => {
-    formOpen.update((current) => {
-      if (current == id) {
+    activeFeature.update((current) => {
+      if (current?.id == id) {
         return null;
       } else {
-        return id;
+        return feature;
       }
     });
-    if ($formOpen == id) {
+    if ($activeFeature?.id == id) {
       // Always set this to null first, to force subscribers to see the update.
       // It's possible to open something from the sidebar, close it (by
       // clicking on the map or using the sidebar), then reopen the same thing.

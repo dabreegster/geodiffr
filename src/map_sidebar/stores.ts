@@ -1,8 +1,8 @@
 import type { Feature } from "geojson";
 import { writable, type Writable } from "svelte/store";
 
-// The optional ID of a feature whose form is open on the sidebar.
-export const formOpen: Writable<number | null> = writable(null);
+// An optional feature that's open on the sidebar.
+export const activeFeature: Writable<Feature | null> = writable(null);
 
 // An optional feature currently hovered from the map or sidebar.
 export const mapHover: Writable<Feature | null> = writable(null);
