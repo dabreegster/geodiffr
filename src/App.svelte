@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { FeatureCollection } from "geojson";
   import { onMount } from "svelte";
   import {
     GeoJSON,
@@ -7,11 +8,20 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
+  import { writable, type Writable } from "svelte/store";
+  import AccordionItem from "./AccordionItem.svelte";
   import Layout from "./Layout.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import { bbox } from "./utils";
 
-  let sampleData;
+  // State to manage sidebar/map correspondance
+  // TODO Bundle somehow?
+  let formOpen: Writable<number | null> = writable(null);
+  let mapHover: Writable<number | null> = writable(null);
+  let sidebarHover: Writable<number | null> = writable(null);
+  let openFromSidebar: Writable<number | null> = writable(null);
+
+  let sampleData: FeatureCollection;
   onMount(async () => {
     let resp = await fetch("/geodiffr/overpass_example.geojson");
     let gj = await resp.json();
@@ -24,8 +34,15 @@
   });
 
   let map;
-
-  let accordionDivs = {};
+  let hovered;
+  // Glue together
+  $: {
+    if (hovered) {
+      mapHover.set(hovered.id);
+    } else {
+      mapHover.set(null);
+    }
+  }
 
   function zoomTo(feature) {
     map?.fitBounds(bbox(feature), {
@@ -35,18 +52,15 @@
     });
   }
 
-  function toggleSidebar(ev, f) {
-    if (ev.target.open) {
-      zoomTo(f);
-    }
+  $: if ($openFromSidebar) {
+    // TODO Hack!
+    zoomTo(sampleData.features[$openFromSidebar - 1]);
   }
 
   function openFromMap(ev) {
     let f = ev.detail.features?.[0];
-    if (f) {
-      accordionDivs[f.id].open = true;
-      accordionDivs[f.id].scrollIntoView({ behavior: "smooth" });
-    }
+    formOpen.set(f.id);
+    // TODO This isn't triggered for clicking emptiness
   }
 </script>
 
@@ -56,13 +70,16 @@
     {#if sampleData}
       <p>{sampleData.features.length} objects</p>
       {#each sampleData.features as f (f.id)}
-        <details
-          bind:this={accordionDivs[f.id]}
-          on:toggle={(ev) => toggleSidebar(ev, f)}
+        <AccordionItem
+          id={f.id}
+          label={f.properties.name ?? f.properties["@id"]}
+          {formOpen}
+          {mapHover}
+          {sidebarHover}
+          {openFromSidebar}
         >
-          <summary>{f.properties.name ?? f.properties["@id"]}</summary>
           <PropertiesTable properties={f.properties} />
-        </details>
+        </AccordionItem>
       {/each}
     {/if}
   </div>
@@ -84,6 +101,7 @@
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
             on:click={openFromMap}
+            bind:hovered
           >
             >
             <Popup openOn="hover" let:features>

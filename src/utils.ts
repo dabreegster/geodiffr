@@ -1,3 +1,4 @@
+import type { GeoJSON } from "geojson";
 import turfBbox from "@turf/bbox";
 
 // Suitable for passing to map.fitBounds. Work around https://github.com/Turfjs/turf/issues/1807.

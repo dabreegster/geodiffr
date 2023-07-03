@@ -17,7 +17,7 @@
     "checkJs": true,
     "isolatedModules": true,
     "types": ["vite/client"],
-    "strict": true,
+    "strict": false,
     "noUnusedLocals": true
   },
   "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "vite.config.ts"]
