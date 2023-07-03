@@ -8,18 +8,10 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
-  import { writable, type Writable } from "svelte/store";
-  import AccordionItem from "./AccordionItem.svelte";
   import Layout from "./Layout.svelte";
+  import AccordionItem from "./map_sidebar/AccordionItem.svelte";
+  import { formOpen, mapHover } from "./map_sidebar/stores";
   import PropertiesTable from "./PropertiesTable.svelte";
-  import { bbox } from "./utils";
-
-  // State to manage sidebar/map correspondance
-  // TODO Bundle somehow?
-  let formOpen: Writable<number | null> = writable(null);
-  let mapHover: Writable<number | null> = writable(null);
-  let sidebarHover: Writable<number | null> = writable(null);
-  let openFromSidebar: Writable<number | null> = writable(null);
 
   let sampleData: FeatureCollection;
   onMount(async () => {
@@ -32,36 +24,6 @@
     }
     sampleData = gj;
   });
-
-  let map;
-  let hovered;
-  // Glue together
-  $: {
-    if (hovered) {
-      mapHover.set(hovered.id);
-    } else {
-      mapHover.set(null);
-    }
-  }
-
-  function zoomTo(feature) {
-    map?.fitBounds(bbox(feature), {
-      padding: 20,
-      animate: true,
-      duration: 500,
-    });
-  }
-
-  $: if ($openFromSidebar) {
-    // TODO Hack!
-    zoomTo(sampleData.features[$openFromSidebar - 1]);
-  }
-
-  function openFromMap(ev) {
-    let f = ev.detail.features?.[0];
-    formOpen.set(f.id);
-    // TODO This isn't triggered for clicking emptiness
-  }
 </script>
 
 <Layout>
@@ -71,12 +33,8 @@
       <p>{sampleData.features.length} objects</p>
       {#each sampleData.features as f (f.id)}
         <AccordionItem
-          id={f.id}
+          feature={f}
           label={f.properties.name ?? f.properties["@id"]}
-          {formOpen}
-          {mapHover}
-          {sidebarHover}
-          {openFromSidebar}
         >
           <PropertiesTable properties={f.properties} />
         </AccordionItem>
@@ -89,7 +47,6 @@
       center={[-0.1095, 51.5076]}
       zoom={13}
       standardControls
-      bind:map
     >
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
@@ -100,8 +57,8 @@
               "line-color": "red",
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
-            on:click={openFromMap}
-            bind:hovered
+            on:click={(e) => formOpen.set(e.detail.features[0].id)}
+            bind:hovered={$mapHover}
           >
             >
             <Popup openOn="hover" let:features>

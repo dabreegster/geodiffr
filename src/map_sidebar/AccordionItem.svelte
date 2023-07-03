@@ -1,16 +1,14 @@
 <script lang="ts">
-  import { type Writable } from "svelte/store";
+  import type { Feature } from "geojson";
   import { slide } from "svelte/transition";
+  import { formOpen, mapHover, openFromSidebar, sidebarHover } from "./stores";
 
-  // Particular to this entry
-  export let id: number;
+  // IDs must be numeric
+  // TODO Be careful with mutations to this. A reason to stick to IDs?
+  export let feature: Feature;
   export let label: string;
 
-  // Stores to manage interactions with the map
-  export let formOpen: Writable<number>;
-  export let mapHover: Writable<number | null>;
-  export let sidebarHover: Writable<number | null>;
-  export let openFromSidebar: Writable<number | null>;
+  let id = feature.id as number;
 
   $: isOpen = $formOpen == id;
   const toggle = () => {
@@ -26,13 +24,13 @@
       // It's possible to open something from the sidebar, close it (by
       // clicking on the map or using the sidebar), then reopen the same thing.
       openFromSidebar.set(null);
-      openFromSidebar.set(id);
+      openFromSidebar.set(feature);
     }
   };
 
-  // TODO Design choice: While a form is open and we hover on something else in
-  // the map, should we underline the item in the sidebar? For now, yes.
-  $: underlineRemotely = $mapHover == id;
+  // Design choice: While a form is open and we hover on something else in
+  // the map, still underline the item in the sidebar.
+  $: underlineRemotely = $mapHover?.id == id;
 
   let contents: HTMLDivElement;
   function scroll() {
@@ -42,7 +40,7 @@
 
 <button
   on:click={toggle}
-  on:mouseenter={() => sidebarHover.set(id)}
+  on:mouseenter={() => sidebarHover.set(feature)}
   on:mouseleave={() => sidebarHover.set(null)}
   aria-expanded={isOpen}
   class:underlined={underlineRemotely}
