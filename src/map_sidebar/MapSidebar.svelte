@@ -1,7 +1,8 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
   import type { GeoJSON } from "geojson";
-  import { mapHover, openFromSidebar } from "./stores";
+  import { mapContext } from "svelte-maplibre";
+  import { openFromSidebar } from "./stores";
 
   // This ties together AccordionItems with objects drawn somewhere on a map,
   // in the following ways:
@@ -15,24 +16,14 @@
   // 6) Selecting an object from the map scrolls the AccordionItem into view in
   //    the sidebar. (But not when selecting it from the sidebar? TODO)
 
-  let map;
-  let hovered;
-
-  // Glue together
-  $: {
-    if (hovered) {
-      mapHover.set(hovered.id);
-    } else {
-      mapHover.set(null);
-    }
-  }
+  const { map } = mapContext();
 
   $: if ($openFromSidebar) {
     zoomTo($openFromSidebar);
   }
 
   function zoomTo(feature) {
-    map?.fitBounds(bbox(feature), {
+    $map?.fitBounds(bbox(feature), {
       padding: 20,
       animate: true,
       duration: 500,

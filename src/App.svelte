@@ -10,6 +10,7 @@
   } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
+  import MapSidebar from "./map_sidebar/MapSidebar.svelte";
   import { formOpen, mapHover } from "./map_sidebar/stores";
   import PropertiesTable from "./PropertiesTable.svelte";
 
@@ -48,6 +49,7 @@
       zoom={13}
       standardControls
     >
+      <MapSidebar />
       {#if sampleData}
         <GeoJSON id="data" data={sampleData}>
           <LineLayer
