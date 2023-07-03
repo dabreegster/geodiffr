@@ -1,8 +1,17 @@
 <script lang="ts">
   import turfBbox from "@turf/bbox";
-  import type { GeoJSON } from "geojson";
-  import { mapContext } from "svelte-maplibre";
-  import { openFromSidebar } from "./stores";
+  import type { FeatureCollection, GeoJSON } from "geojson";
+  import {
+    GeoJSON as GeoJSONSource,
+    LineLayer,
+    mapContext,
+  } from "svelte-maplibre";
+  import {
+    activeFeature,
+    mapHover,
+    openFromSidebar,
+    sidebarHover,
+  } from "./stores";
 
   // This ties together AccordionItems with objects drawn somewhere on a map,
   // in the following ways:
@@ -34,4 +43,23 @@
   function bbox(gj: GeoJSON): [number, number, number, number] {
     return turfBbox(gj) as [number, number, number, number];
   }
+
+  function emptyGeojson(): FeatureCollection {
+    return {
+      type: "FeatureCollection",
+      features: [],
+    };
+  }
+
+  $: hoverGj = $activeFeature || $mapHover || $sidebarHover || emptyGeojson();
 </script>
+
+<GeoJSONSource id="hover" data={hoverGj}>
+  <LineLayer
+    paint={{
+      "line-width": 15,
+      "line-color": "blue",
+      "line-opacity": 0.5,
+    }}
+  />
+</GeoJSONSource>
