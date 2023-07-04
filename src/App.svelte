@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { FeatureCollection } from "geojson";
+  import layers from "protomaps-themes-base";
   import { onMount } from "svelte";
   import {
     GeoJSON,
@@ -14,8 +15,22 @@
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
   import MapSidebar from "./map_sidebar/MapSidebar.svelte";
   import { activeFeature, mapHover } from "./map_sidebar/stores";
+  import PmTiles from "./PmTiles.svelte";
   import PropertiesTable from "./PropertiesTable.svelte";
   import { auditData } from "./shared";
+
+  let basemapStyle = {
+    version: 8,
+    // TODO Also host locally for offline
+    glyphs: "https://cdn.protomaps.com/fonts/pbf/{fontstack}/{range}.pbf",
+    sources: {
+      protomaps: {
+        type: "vector",
+        url: "pmtiles:///geodiffr/southbank.pmtiles",
+      },
+    },
+    layers: layers("protomaps", "light"),
+  };
 
   let inputData: FeatureCollection;
   let comparisonData: FeatureCollection;
@@ -92,8 +107,9 @@
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
+    <PmTiles />
     <MapLibre
-      style="https://api.maptiler.com/maps/streets/style.json?key=MZEJTanw3WpxRvt7qDfo"
+      style={basemapStyle}
       center={[-0.1095, 51.5076]}
       zoom={13}
       standardControls
