@@ -3,6 +3,7 @@ import { writable, type Writable } from "svelte/store";
 export interface AuditData {
   funding_round: undefined | "ATF2" | "ATF3";
   ltn120_compliant: undefined | "yes" | "no";
+  // Also timestamp and person who audited it
 }
 
 let localStorageData = window.localStorage.getItem("geodiffr");
