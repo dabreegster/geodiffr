@@ -37,13 +37,14 @@
   // the map, still underline the item in the sidebar.
   $: underlineRemotely = $mapHover?.id == id;
 
-  let contents: HTMLDivElement;
+  let accordion: HTMLDivElement;
   function scroll() {
-    contents?.scrollIntoView({ behavior: "smooth" });
+    accordion?.scrollIntoView({ behavior: "smooth" });
   }
 </script>
 
 <button
+  bind:this={accordion}
   on:click={toggle}
   on:mouseenter={() => sidebarHover.set(feature)}
   on:mouseleave={() => sidebarHover.set(null)}
@@ -64,7 +65,6 @@
 </button>
 {#if isOpen}
   <div
-    bind:this={contents}
     transition:slide={{ duration: 100 }}
     on:introend={() => scroll()}
     style="border: solid 1px black; padding: 10px"
