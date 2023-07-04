@@ -8,11 +8,14 @@
     MapLibre,
     Popup,
   } from "svelte-maplibre";
+  import AuditControls from "./AuditControls.svelte";
+  import AuditForm from "./AuditForm.svelte";
   import Layout from "./Layout.svelte";
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
   import MapSidebar from "./map_sidebar/MapSidebar.svelte";
   import { activeFeature, mapHover } from "./map_sidebar/stores";
   import PropertiesTable from "./PropertiesTable.svelte";
+  import { auditData } from "./shared";
 
   let sampleData: FeatureCollection;
   onMount(async () => {
@@ -32,11 +35,13 @@
     <h1>GeoDiffr</h1>
     {#if sampleData}
       <p>{sampleData.features.length} objects</p>
+      <AuditControls />
       {#each sampleData.features as f (f.id)}
         <AccordionItem
           feature={f}
           label={f.properties.name ?? f.properties["@id"]}
         >
+          <AuditForm bind:data={$auditData[f.id]} />
           <PropertiesTable properties={f.properties} />
         </AccordionItem>
       {/each}
