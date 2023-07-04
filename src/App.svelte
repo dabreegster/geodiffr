@@ -27,13 +27,24 @@
 
   onMount(async () => {
     let resp1 = await fetch("/geodiffr/overpass_example.geojson");
-    inputData = fixIDs(await resp1.json());
+    inputData = fixIDs(fixInputData(await resp1.json()));
 
     let resp2 = await fetch("/geodiffr/cid.geojson");
-    comparisonData = fixIDs(filterComparisonData(await resp2.json()));
+    comparisonData = fixIDs(fixComparisonData(await resp2.json()));
   });
 
-  function filterComparisonData(gj: FeatureCollection) {
+  function fixInputData(gj: FeatureCollection) {
+    for (let f of gj.features) {
+      if (f.properties["@id"]) {
+        let id = f.properties["@id"].replace("way/", "");
+        f.properties.url = `http://openstreetmap.org/way/${id}`;
+        delete f.properties["@id"];
+      }
+    }
+    return gj;
+  }
+
+  function fixComparisonData(gj: FeatureCollection) {
     // The input right now is only separated infrastructure, so temporarily
     // filter the CID data. This'd be per-dataset logic later on.
     gj.features = gj.features.filter((f) => f.properties.CLT_SEGREG);
@@ -64,15 +75,20 @@
     {#if inputData}
       <p>Input data: {inputData.features.length} objects</p>
       <AuditControls />
-      {#each inputData.features as f (f.id)}
-        <AccordionItem
-          feature={f}
-          label={f.properties.name ?? f.properties["@id"]}
-        >
-          <AuditForm bind:data={$auditData[f.id]} />
-          <PropertiesTable properties={f.properties} />
-        </AccordionItem>
-      {/each}
+      <div class="list">
+        {#each inputData.features as f (f.id)}
+          <AccordionItem
+            feature={f}
+            label={f.properties.name ?? f.properties.url}
+          >
+            <AuditForm bind:data={$auditData[f.id]} />
+            <PropertiesTable properties={f.properties} />
+            {#if f.properties.url}
+              <a href={f.properties.url} target="_blank">Open OSM way</a>
+            {/if}
+          </AccordionItem>
+        {/each}
+      </div>
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
@@ -121,3 +137,12 @@
     </MapLibre>
   </div>
 </Layout>
+
+<style>
+  .list {
+    border: 1px solid;
+    padding: 4px;
+    height: 550px;
+    overflow-y: scroll;
+  }
+</style>
