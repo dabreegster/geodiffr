@@ -11,6 +11,7 @@
   } from "svelte-maplibre";
   import AuditControls from "./AuditControls.svelte";
   import AuditForm from "./AuditForm.svelte";
+  import Endcaps from "./Endcaps.svelte";
   import Layout from "./Layout.svelte";
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
   import MapSidebar from "./map_sidebar/MapSidebar.svelte";
@@ -120,7 +121,7 @@
           <LineLayer
             manageHoverState
             paint={{
-              "line-width": 5,
+              "line-width": 10,
               "line-color": "red",
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
@@ -132,13 +133,14 @@
             </Popup>
           </LineLayer>
         </GeoJSON>
+        <Endcaps source="input" lineStrings={inputData} />
       {/if}
       {#if comparisonData}
         <GeoJSON id="comparison" data={comparisonData}>
           <LineLayer
             manageHoverState
             paint={{
-              "line-width": 5,
+              "line-width": 10,
               "line-color": "green",
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
@@ -149,6 +151,11 @@
             </Popup>
           </LineLayer>
         </GeoJSON>
+        <Endcaps
+          source="comparison"
+          lineStrings={comparisonData}
+          layout={comparisonLayer}
+        />
       {/if}
     </MapLibre>
   </div>
