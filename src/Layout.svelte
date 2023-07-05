@@ -18,6 +18,6 @@
   }
   .main {
     /* TODO 75% wraps?! */
-    width: 73%;
+    width: 70%;
   }
 </style>
