@@ -11,6 +11,7 @@
   } from "svelte-maplibre";
   import AuditControls from "./AuditControls.svelte";
   import AuditForm from "./AuditForm.svelte";
+  import { fixComparisonData } from "./cid";
   import Endcaps from "./Endcaps.svelte";
   import Layout from "./Layout.svelte";
   import AccordionItem from "./map_sidebar/AccordionItem.svelte";
@@ -42,11 +43,15 @@
   };
 
   onMount(async () => {
-    let resp1 = await fetch("/geodiffr/overpass_example.geojson");
-    inputData = fixIDs(fixInputData(await resp1.json()));
+    try {
+      let resp1 = await fetch("/geodiffr/overpass_example.geojson");
+      inputData = fixIDs(fixInputData(await resp1.json()));
 
-    let resp2 = await fetch("/geodiffr/cid.geojson");
-    comparisonData = fixIDs(fixComparisonData(await resp2.json()));
+      let resp2 = await fetch("/geodiffr/cid.geojson");
+      comparisonData = fixIDs(fixComparisonData(await resp2.json()));
+    } catch (err) {
+      window.alert(`Input error: ${err}`);
+    }
   });
 
   function fixInputData(gj: FeatureCollection) {
@@ -57,13 +62,6 @@
         delete f.properties["@id"];
       }
     }
-    return gj;
-  }
-
-  function fixComparisonData(gj: FeatureCollection) {
-    // The input right now is only separated infrastructure, so temporarily
-    // filter the CID data. This'd be per-dataset logic later on.
-    gj.features = gj.features.filter((f) => f.properties.CLT_SEGREG);
     return gj;
   }
 
