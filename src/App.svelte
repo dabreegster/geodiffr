@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { FeatureCollection } from "geojson";
+  import type { Feature, FeatureCollection } from "geojson";
   import layers from "protomaps-themes-base";
   import { onMount } from "svelte";
   import {
@@ -73,6 +73,15 @@
     }
     return gj;
   }
+
+  function openPhotos(f: Feature) {
+    if (f.properties.PHOTO1_URL) {
+      window.open(f.properties.PHOTO1_URL, "_blank");
+    }
+    if (f.properties.PHOTO2_URL) {
+      window.open(f.properties.PHOTO2_URL, "_blank");
+    }
+  }
 </script>
 
 <Layout>
@@ -143,6 +152,7 @@
               "line-opacity": hoverStateFilter(1.0, 0.5),
             }}
             layout={comparisonLayer}
+            on:click={(e) => openPhotos(e.detail.features[0])}
           >
             <Popup openOn="hover" let:features>
               <PropertiesTable properties={features[0].properties} />
