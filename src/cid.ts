@@ -1,9 +1,18 @@
-import type { FeatureCollection } from "geojson";
+import booleanContains from "@turf/boolean-contains";
+import type { Feature, FeatureCollection, Polygon } from "geojson";
 
-export function fixComparisonData(gj: FeatureCollection): FeatureCollection {
+export function fixComparisonData(
+  gj: FeatureCollection,
+  bboxClip: Feature<Polygon>
+): FeatureCollection {
   // https://cycling.data.tfl.gov.uk/CyclingInfrastructure/documentation/asset_information_guide.pdf as reference
   let errors = 0;
   for (let f of gj.features) {
+    // TODO Slow!
+    if (f.geometry.type == "MultiLineString" || !booleanContains(bboxClip, f)) {
+      continue;
+    }
+
     // TODO For now, don't enforce these checks; just log violations
     // The rules aren't correct yet!
     try {

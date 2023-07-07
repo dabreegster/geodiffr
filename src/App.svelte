@@ -1,4 +1,6 @@
 <script lang="ts">
+  import bbox from "@turf/bbox";
+  import bboxPolygon from "@turf/bbox-polygon";
   import type { Feature, FeatureCollection } from "geojson";
   import layers from "protomaps-themes-base";
   import { onMount } from "svelte";
@@ -46,11 +48,12 @@
     try {
       let resp1 = await fetch("/geodiffr/overpass_example.geojson");
       inputData = fixIDs(fixInputData(await resp1.json()));
+      let bboxClip = bboxPolygon(bbox(inputData));
 
       let resp2 = await fetch("/geodiffr/cid.geojson");
-      comparisonData = fixIDs(fixComparisonData(await resp2.json()));
+      comparisonData = fixIDs(fixComparisonData(await resp2.json(), bboxClip));
     } catch (err) {
-      window.alert(`Input error: ${err}`);
+      console.log(err);
     }
   });
 
@@ -75,6 +78,7 @@
   }
 
   function openPhotos(f: Feature) {
+    // TODO no_asset_photo.png
     if (f.properties.PHOTO1_URL) {
       window.open(f.properties.PHOTO1_URL, "_blank");
     }
