@@ -1,7 +1,6 @@
 <script lang="ts">
   import bbox from "@turf/bbox";
   import type { FeatureCollection } from "geojson";
-  import { JsonView } from "@zerodevx/svelte-json-view";
   import type { Map, MapMouseEvent } from "maplibre-gl";
   import {
     FillLayer,
@@ -12,6 +11,27 @@
   } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
   import DatasetLayers from "./DatasetLayers.svelte";
+  import LayerControl from "./LayerControl.svelte";
+
+  // Vivid from https://carto.com/carto-colors/
+  let colors = [
+    "#66C5CC",
+    "#F6CF71",
+    "#F89C74",
+    "#DCB0F2",
+    "#87C55F",
+    "#9EB9F3",
+    "#FE88B1",
+    "#C9DB74",
+    "#8BE0A4",
+    "#B497E7",
+    "#D3B484",
+    "#B3B3B3",
+  ];
+  const colorA: string = colors[0];
+  const colorB: string = colors[1];
+  const colorC: string = colors[2];
+  const colorHighlight: string = "yellow";
 
   let empty = {
     type: "FeatureCollection" as const,
@@ -20,10 +40,13 @@
   // TODO Bundle together a type
   let gjA: FeatureCollection = empty;
   let gjB: FeatureCollection = empty;
+  let gjC: FeatureCollection = empty;
   let filenameA = "";
   let filenameB = "";
+  let filenameC = "";
   let opacityA = 0.5;
   let opacityB = 0.5;
+  let opacityC = 0.5;
 
   let map: Map;
   let pinnedFeatures: FeatureCollection = empty;
@@ -43,20 +66,31 @@
         "b-points",
         "b-lines",
         "b-polygons",
+        "c-points",
+        "c-lines",
+        "c-polygons",
       ],
     })) {
-      let dataset = rendered.layer.id.startsWith("a-") ? gjA : gjB;
+      let dataset;
+      if (rendered.layer.id.startsWith("a-")) {
+        dataset = gjA;
+      } else if (rendered.layer.id.startsWith("b-")) {
+        dataset = gjB;
+      } else {
+        dataset = gjC;
+      }
+
       // Find the original feature in the GJ, to avoid having to parse nested properties
-      pinnedFeatures.features.push(
+      pinnedFeatures.features = [
+        ...pinnedFeatures.features,
         dataset.features.find((f) => f.id == rendered.id)!,
-      );
+      ];
     }
-    pinnedFeatures = pinnedFeatures;
   }
 
   let fileInput: HTMLInputElement;
   async function loadFiles(e: Event) {
-    if (fileInput.files?.length != 2) {
+    if (fileInput.files?.length != 3) {
       window.alert("Select two GeoJSON files to compare");
       return;
     }
@@ -66,6 +100,8 @@
       filenameA = fileInput.files[0].name;
       gjB = await loadFile(fileInput.files[1], "b");
       filenameB = fileInput.files[1].name;
+      gjC = await loadFile(fileInput.files[2], "c");
+      filenameC = fileInput.files[2].name;
       pinnedFeatures.features = [];
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
@@ -74,7 +110,7 @@
 
   async function loadFile(
     file: File,
-    dataset: "a" | "b",
+    dataset: "a" | "b" | "c",
   ): Promise<FeatureCollection> {
     let text = await file.text();
     let gj = JSON.parse(text);
@@ -113,37 +149,27 @@
     <hr />
 
     {#if filenameA}
-      <div style="background: red"><u><b>A</b>: {filenameA}</u></div>
-      <label
-        >Opacity:<input
-          type="range"
-          min="0.0"
-          max="1.0"
-          step="0.1"
-          bind:value={opacityA}
-        /></label
-      >
-      {#each pinnedFeatures.features as f}
-        {#if f.dataset == "a"}
-          <JsonView json={f.properties} />
-        {/if}
-      {/each}
-
-      <div style="background: blue"><u><b>B</b>: {filenameB}</u></div>
-      <label
-        >Opacity:<input
-          type="range"
-          min="0.0"
-          max="1.0"
-          step="0.1"
-          bind:value={opacityB}
-        /></label
-      >
-      {#each pinnedFeatures.features as f}
-        {#if f.dataset == "b"}
-          <JsonView json={f.properties} />
-        {/if}
-      {/each}
+      <LayerControl
+        filename={filenameA}
+        label="a"
+        bind:opacity={opacityA}
+        {pinnedFeatures}
+        color={colorA}
+      />
+      <LayerControl
+        filename={filenameB}
+        label="b"
+        bind:opacity={opacityB}
+        {pinnedFeatures}
+        color={colorB}
+      />
+      <LayerControl
+        filename={filenameC}
+        label="c"
+        bind:opacity={opacityC}
+        {pinnedFeatures}
+        color="green"
+      />
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
@@ -157,28 +183,29 @@
         console.log(e.detail.error);
       }}
     >
-      <DatasetLayers gj={gjA} name="a" color="red" opacity={opacityA} />
-      <DatasetLayers gj={gjB} name="b" color="blue" opacity={opacityB} />
+      <DatasetLayers gj={gjA} name="a" color={colorA} opacity={opacityA} />
+      <DatasetLayers gj={gjB} name="b" color={colorB} opacity={opacityB} />
+      <DatasetLayers gj={gjC} name="c" color={colorC} opacity={opacityC} />
 
       <GeoJSON data={pinnedFeatures}>
         <FillLayer
           filter={["==", ["geometry-type"], "Polygon"]}
           paint={{
-            "fill-color": "yellow",
+            "fill-color": colorHighlight,
           }}
         />
         <LineLayer
           filter={["==", ["geometry-type"], "LineString"]}
           paint={{
             "line-width": 8,
-            "line-color": "yellow",
+            "line-color": colorHighlight,
           }}
         />
         <CircleLayer
           filter={["==", ["geometry-type"], "Point"]}
           paint={{
             "circle-radius": 10,
-            "circle-color": "yellow",
+            "circle-color": colorHighlight,
           }}
         />
       </GeoJSON>
