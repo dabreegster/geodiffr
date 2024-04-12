@@ -9,15 +9,16 @@
     MapLibre,
     LineLayer,
     CircleLayer,
-    hoverStateFilter,
   } from "svelte-maplibre";
   import Layout from "./Layout.svelte";
+  import DatasetLayers from "./DatasetLayers.svelte";
 
   let empty = {
     type: "FeatureCollection" as const,
     features: [],
   };
-  let gj: FeatureCollection = empty;
+  let gjA: FeatureCollection = empty;
+  let gjB: FeatureCollection = empty;
 
   let map: Map;
   let pinnedFeature: Feature | null = null;
@@ -27,38 +28,50 @@
   }
 
   function onClick(e: MapMouseEvent) {
+    // TODO Rethink this
     pinnedFeature = null;
     for (let rendered of map.queryRenderedFeatures(e.point, {
       layers: ["points", "lines", "polygons"],
     })) {
       // Find the original feature in the GJ, to avoid having to parse nested properties
-      pinnedFeature = gj.features.find((f) => f.id == rendered.id)!;
+      pinnedFeature = gjA.features.find((f) => f.id == rendered.id)!;
       break;
     }
   }
 
   let fileInput: HTMLInputElement;
-  async function loadFile(e: Event) {
+  async function loadFiles(e: Event) {
+    if (fileInput.files?.length != 2) {
+      window.alert("Select two GeoJSON files to compare");
+      return;
+    }
+
     try {
-      let text = await fileInput.files![0].text();
-      let json = JSON.parse(text);
-
-      // Overwrite feature IDs
-      // TODO This could mess up some diffing heuristics!
-      let id = 1;
-      for (let f of json.features) {
-        f.id = id++;
-      }
-
-      gj = json;
+      gjA = await loadFile(fileInput.files![0]);
+      gjB = await loadFile(fileInput.files![1]);
       pinnedFeature = null;
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
     }
   }
 
+  async function loadFile(file: File): Promise<FeatureCollection> {
+    let text = await file.text();
+    let gj = JSON.parse(text);
+
+    // Overwrite feature IDs
+    // TODO This could mess up some diffing heuristics!
+    let id = 1;
+    for (let f of gj.features) {
+      f.id = id++;
+    }
+
+    return gj;
+  }
+
   function zoomFit() {
-    map?.fitBounds(bbox(gj) as [number, number, number, number], {
+    // Just use one dataset, assuming both cover similar extents
+    map?.fitBounds(bbox(gjA) as [number, number, number, number], {
       animate: false,
       padding: 10,
     });
@@ -71,7 +84,7 @@
 
     <label>
       Load a .geojson file
-      <input bind:this={fileInput} on:change={loadFile} type="file" />
+      <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
     </label>
 
     <div><button on:click={zoomFit}>Zoom to fit</button></div>
@@ -92,65 +105,28 @@
         console.log(e.detail.error);
       }}
     >
-      <GeoJSON data={gj}>
-        <FillLayer
-          id="polygons"
-          filter={["==", ["geometry-type"], "Polygon"]}
-          manageHoverState
-          eventsIfTopMost
-          hoverCursor="pointer"
-          paint={{
-            "fill-color": "red",
-            "fill-opacity": hoverStateFilter(0.5, 1.0),
-          }}
-        />
-
-        <LineLayer
-          id="lines"
-          filter={["==", ["geometry-type"], "LineString"]}
-          manageHoverState
-          eventsIfTopMost
-          hoverCursor="pointer"
-          paint={{
-            "line-width": 8,
-            "line-color": "red",
-            "line-opacity": hoverStateFilter(0.5, 1.0),
-          }}
-        />
-
-        <CircleLayer
-          id="points"
-          filter={["==", ["geometry-type"], "Point"]}
-          manageHoverState
-          eventsIfTopMost
-          hoverCursor="pointer"
-          paint={{
-            "circle-radius": 10,
-            "circle-color": "red",
-            "circle-opacity": hoverStateFilter(0.5, 1.0),
-          }}
-        />
-      </GeoJSON>
+      <DatasetLayers gj={gjA} name="a" color="red" />
+      <DatasetLayers gj={gjB} name="b" color="blue" />
 
       <GeoJSON data={pinnedFeature || empty}>
         <FillLayer
           filter={["==", ["geometry-type"], "Polygon"]}
           paint={{
-            "fill-color": "cyan",
+            "fill-color": "yellow",
           }}
         />
         <LineLayer
           filter={["==", ["geometry-type"], "LineString"]}
           paint={{
             "line-width": 8,
-            "line-color": "cyan",
+            "line-color": "yellow",
           }}
         />
         <CircleLayer
           filter={["==", ["geometry-type"], "Point"]}
           paint={{
             "circle-radius": 10,
-            "circle-color": "cyan",
+            "circle-color": "yellow",
           }}
         />
       </GeoJSON>
