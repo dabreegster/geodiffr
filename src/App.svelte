@@ -1,6 +1,6 @@
 <script lang="ts">
   import bbox from "@turf/bbox";
-  import type { Feature, FeatureCollection } from "geojson";
+  import type { FeatureCollection } from "geojson";
   import { JsonView } from "@zerodevx/svelte-json-view";
   import type { Map, MapMouseEvent } from "maplibre-gl";
   import {
@@ -26,22 +26,32 @@
   let opacityB = 0.5;
 
   let map: Map;
-  let pinnedFeature: Feature | null = null;
+  let pinnedFeatures: FeatureCollection = empty;
 
   $: if (map) {
     map.on("click", onClick);
   }
 
   function onClick(e: MapMouseEvent) {
-    // TODO Rethink this
-    pinnedFeature = null;
+    pinnedFeatures.features = [];
+    // TODO Dedupe by feature ID, since these could repeat across tile boundaries
     for (let rendered of map.queryRenderedFeatures(e.point, {
-      layers: ["points", "lines", "polygons"],
+      layers: [
+        "a-points",
+        "a-lines",
+        "a-polygons",
+        "b-points",
+        "b-lines",
+        "b-polygons",
+      ],
     })) {
+      let dataset = rendered.layer.id.startsWith("a-") ? gjA : gjB;
       // Find the original feature in the GJ, to avoid having to parse nested properties
-      pinnedFeature = gjA.features.find((f) => f.id == rendered.id)!;
-      break;
+      pinnedFeatures.features.push(
+        dataset.features.find((f) => f.id == rendered.id)!,
+      );
     }
+    pinnedFeatures = pinnedFeatures;
   }
 
   let fileInput: HTMLInputElement;
@@ -52,17 +62,20 @@
     }
 
     try {
-      gjA = await loadFile(fileInput.files[0]);
+      gjA = await loadFile(fileInput.files[0], "a");
       filenameA = fileInput.files[0].name;
-      gjB = await loadFile(fileInput.files[1]);
+      gjB = await loadFile(fileInput.files[1], "b");
       filenameB = fileInput.files[1].name;
-      pinnedFeature = null;
+      pinnedFeatures.features = [];
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
     }
   }
 
-  async function loadFile(file: File): Promise<FeatureCollection> {
+  async function loadFile(
+    file: File,
+    dataset: "a" | "b",
+  ): Promise<FeatureCollection> {
     let text = await file.text();
     let gj = JSON.parse(text);
 
@@ -71,6 +84,8 @@
     let id = 1;
     for (let f of gj.features) {
       f.id = id++;
+      // Add a new attribute to track later
+      f.dataset = dataset;
     }
 
     return gj;
@@ -90,7 +105,7 @@
     <h1>GeoDiffr</h1>
 
     <label>
-      Load a .geojson file
+      Load two .geojson files
       <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
     </label>
 
@@ -108,6 +123,11 @@
           bind:value={opacityA}
         /></label
       >
+      {#each pinnedFeatures.features as f}
+        {#if f.dataset == "a"}
+          <JsonView json={f.properties} />
+        {/if}
+      {/each}
 
       <div style="background: blue"><u><b>B</b>: {filenameB}</u></div>
       <label
@@ -119,10 +139,11 @@
           bind:value={opacityB}
         /></label
       >
-    {/if}
-
-    {#if pinnedFeature}
-      <JsonView json={pinnedFeature.properties} />
+      {#each pinnedFeatures.features as f}
+        {#if f.dataset == "b"}
+          <JsonView json={f.properties} />
+        {/if}
+      {/each}
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
@@ -139,7 +160,7 @@
       <DatasetLayers gj={gjA} name="a" color="red" opacity={opacityA} />
       <DatasetLayers gj={gjB} name="b" color="blue" opacity={opacityB} />
 
-      <GeoJSON data={pinnedFeature || empty}>
+      <GeoJSON data={pinnedFeatures}>
         <FillLayer
           filter={["==", ["geometry-type"], "Polygon"]}
           paint={{
