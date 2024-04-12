@@ -122,6 +122,8 @@ dependencies = [
  "anyhow",
  "clap",
  "geojson",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
