@@ -17,8 +17,13 @@
     type: "FeatureCollection" as const,
     features: [],
   };
+  // TODO Bundle together a type
   let gjA: FeatureCollection = empty;
   let gjB: FeatureCollection = empty;
+  let filenameA = "";
+  let filenameB = "";
+  let opacityA = 0.5;
+  let opacityB = 0.5;
 
   let map: Map;
   let pinnedFeature: Feature | null = null;
@@ -47,8 +52,10 @@
     }
 
     try {
-      gjA = await loadFile(fileInput.files![0]);
-      gjB = await loadFile(fileInput.files![1]);
+      gjA = await loadFile(fileInput.files[0]);
+      filenameA = fileInput.files[0].name;
+      gjB = await loadFile(fileInput.files[1]);
+      filenameB = fileInput.files[1].name;
       pinnedFeature = null;
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
@@ -90,6 +97,30 @@
     <div><button on:click={zoomFit}>Zoom to fit</button></div>
     <hr />
 
+    {#if filenameA}
+      <div style="background: red"><u><b>A</b>: {filenameA}</u></div>
+      <label
+        >Opacity:<input
+          type="range"
+          min="0.0"
+          max="1.0"
+          step="0.1"
+          bind:value={opacityA}
+        /></label
+      >
+
+      <div style="background: blue"><u><b>B</b>: {filenameB}</u></div>
+      <label
+        >Opacity:<input
+          type="range"
+          min="0.0"
+          max="1.0"
+          step="0.1"
+          bind:value={opacityB}
+        /></label
+      >
+    {/if}
+
     {#if pinnedFeature}
       <JsonView json={pinnedFeature.properties} />
     {/if}
@@ -105,8 +136,8 @@
         console.log(e.detail.error);
       }}
     >
-      <DatasetLayers gj={gjA} name="a" color="red" />
-      <DatasetLayers gj={gjB} name="b" color="blue" />
+      <DatasetLayers gj={gjA} name="a" color="red" opacity={opacityA} />
+      <DatasetLayers gj={gjB} name="b" color="blue" opacity={opacityB} />
 
       <GeoJSON data={pinnedFeature || empty}>
         <FillLayer

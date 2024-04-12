@@ -11,6 +11,7 @@
   export let gj: FeatureCollection;
   export let name: string;
   export let color: string;
+  export let opacity: number;
 </script>
 
 <GeoJSON data={gj}>
@@ -22,7 +23,10 @@
     hoverCursor="pointer"
     paint={{
       "fill-color": color,
-      "fill-opacity": hoverStateFilter(0.5, 1.0),
+      "fill-opacity": hoverStateFilter(opacity, 1.0),
+    }}
+    layout={{
+      visibility: opacity == 0 ? "none" : "visible",
     }}
   />
 
@@ -35,7 +39,10 @@
     paint={{
       "line-width": 8,
       "line-color": color,
-      "line-opacity": hoverStateFilter(0.5, 1.0),
+      "line-opacity": hoverStateFilter(opacity, 1.0),
+    }}
+    layout={{
+      visibility: opacity == 0 ? "none" : "visible",
     }}
   />
 
@@ -48,7 +55,10 @@
     paint={{
       "circle-radius": 10,
       "circle-color": color,
-      "circle-opacity": hoverStateFilter(0.5, 1.0),
+      "circle-opacity": hoverStateFilter(opacity, 1.0),
+    }}
+    layout={{
+      visibility: opacity == 0 ? "none" : "visible",
     }}
   />
 </GeoJSON>
