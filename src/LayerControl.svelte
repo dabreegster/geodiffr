@@ -16,18 +16,21 @@
   }
 </script>
 
-<div style="background: {color}"><u><b>{name}</b>: {filename}</u></div>
-<label
-  >Opacity:<input
-    type="range"
-    min="0.0"
-    max="1.0"
-    step="0.1"
-    bind:value={opacity}
-  /></label
->
+<div style="background: {color}">
+  <u>
+    <b>{name}</b>
+    : {filename}
+  </u>
+</div>
+<label>
+  Opacity:
+  <input type="range" min="0.0" max="1.0" step="0.1" bind:value={opacity} />
+</label>
 
-<label>Show:<input type="checkbox" bind:checked={show} /></label>
+<label>
+  Show:
+  <input type="checkbox" bind:checked={show} />
+</label>
 {#each pinnedFeatures.features as f}
   {#if f.dataset == name}
     <JsonView json={f.properties} />
