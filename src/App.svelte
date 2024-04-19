@@ -28,10 +28,10 @@
     "#D3B484",
     "#B3B3B3",
   ];
-  const colorA: string = colors[0];
-  const colorB: string = colors[1];
-  const colorC: string = colors[2];
-  const colorHighlight: string = "yellow";
+  const colorA = colors[0];
+  const colorB = colors[1];
+  const colorDiff = colors[2];
+  const colorHighlight = "yellow";
 
   let empty = {
     type: "FeatureCollection" as const,
@@ -40,13 +40,13 @@
   // TODO Bundle together a type
   let gjA: FeatureCollection = empty;
   let gjB: FeatureCollection = empty;
-  let gjC: FeatureCollection = empty;
+  let gjDiff: FeatureCollection = empty;
   let filenameA = "";
   let filenameB = "";
-  let filenameC = "";
+  let filenameDiff = "";
   let opacityA = 0.5;
   let opacityB = 0.5;
-  let opacityC = 0.5;
+  let opacityDiff = 0.5;
 
   let map: Map;
   let pinnedFeatures: FeatureCollection = empty;
@@ -66,9 +66,9 @@
         "b-points",
         "b-lines",
         "b-polygons",
-        "c-points",
-        "c-lines",
-        "c-polygons",
+        "diff-points",
+        "diff-lines",
+        "diff-polygons",
       ],
     })) {
       let dataset;
@@ -77,7 +77,7 @@
       } else if (rendered.layer.id.startsWith("b-")) {
         dataset = gjB;
       } else {
-        dataset = gjC;
+        dataset = gjDiff;
       }
 
       // Find the original feature in the GJ, to avoid having to parse nested properties
@@ -90,8 +90,14 @@
 
   let fileInput: HTMLInputElement;
   async function loadFiles(e: Event) {
-    if (fileInput.files?.length != 3) {
-      window.alert("Select two GeoJSON files to compare");
+    if (!fileInput.files) {
+      return;
+    }
+    let len = fileInput.files.length;
+    if (len != 2 && len != 3) {
+      window.alert(
+        "Select two GeoJSON files to compare, or three (including a diff)",
+      );
       return;
     }
 
@@ -100,8 +106,10 @@
       filenameA = fileInput.files[0].name;
       gjB = await loadFile(fileInput.files[1], "b");
       filenameB = fileInput.files[1].name;
-      gjC = await loadFile(fileInput.files[2], "c");
-      filenameC = fileInput.files[2].name;
+      if (len == 3) {
+        gjDiff = await loadFile(fileInput.files[2], "diff");
+        filenameDiff = fileInput.files[2].name;
+      }
       pinnedFeatures.features = [];
     } catch (err) {
       window.alert(`Bad input file: ${err}`);
@@ -110,7 +118,7 @@
 
   async function loadFile(
     file: File,
-    dataset: "a" | "b" | "c",
+    dataset: "a" | "b" | "diff",
   ): Promise<FeatureCollection> {
     let text = await file.text();
     let gj = JSON.parse(text);
@@ -141,7 +149,7 @@
     <h1>GeoDiffr</h1>
 
     <label>
-      Load two .geojson files
+      Load two .geojson files (or three with a diff)
       <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
     </label>
 
@@ -151,24 +159,26 @@
     {#if filenameA}
       <LayerControl
         filename={filenameA}
-        label="a"
+        name="a"
         bind:opacity={opacityA}
         {pinnedFeatures}
         color={colorA}
       />
       <LayerControl
         filename={filenameB}
-        label="b"
+        name="b"
         bind:opacity={opacityB}
         {pinnedFeatures}
         color={colorB}
       />
+    {/if}
+    {#if filenameDiff}
       <LayerControl
-        filename={filenameC}
-        label="c"
-        bind:opacity={opacityC}
+        filename={filenameDiff}
+        name="diff"
+        bind:opacity={opacityDiff}
         {pinnedFeatures}
-        color="green"
+        color={colorDiff}
       />
     {/if}
   </div>
@@ -185,7 +195,12 @@
     >
       <DatasetLayers gj={gjA} name="a" color={colorA} opacity={opacityA} />
       <DatasetLayers gj={gjB} name="b" color={colorB} opacity={opacityB} />
-      <DatasetLayers gj={gjC} name="c" color={colorC} opacity={opacityC} />
+      <DatasetLayers
+        gj={gjDiff}
+        name="diff"
+        color={colorDiff}
+        opacity={opacityDiff}
+      />
 
       <GeoJSON data={pinnedFeatures}>
         <FillLayer
