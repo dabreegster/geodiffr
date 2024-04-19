@@ -12,6 +12,7 @@
   import Layout from "./Layout.svelte";
   import DatasetLayers from "./DatasetLayers.svelte";
   import LayerControl from "./LayerControl.svelte";
+  import { removeIdenticalFeatures } from "./diff";
 
   // Vivid from https://carto.com/carto-colors/
   let colors = [
@@ -142,6 +143,14 @@
       padding: 10,
     });
   }
+
+  function removeUnchanged() {
+    let len = gjA.features.length;
+    removeIdenticalFeatures(gjA, gjB);
+    gjA = gjA;
+    gjB = gjB;
+    window.alert(`Removed ${len - gjA.features.length} unchanged features`);
+  }
 </script>
 
 <Layout>
@@ -155,6 +164,10 @@
 
     <div><button on:click={zoomFit}>Zoom to fit</button></div>
     <hr />
+
+    <div>
+      <button on:click={removeUnchanged}>Remove unchanged features</button>
+    </div>
 
     {#if filenameA}
       <LayerControl
