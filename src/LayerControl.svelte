@@ -1,11 +1,7 @@
 <script lang="ts">
-  import { JsonView } from "@zerodevx/svelte-json-view";
-  import type { FeatureCollection } from "geojson";
-
   export let filename: string;
   export let name: string;
   export let opacity: number = 0.5;
-  export let pinnedFeatures: FeatureCollection;
   export let color: string;
 
   let show: boolean = true;
@@ -31,8 +27,3 @@
   Show:
   <input type="checkbox" bind:checked={show} />
 </label>
-{#each pinnedFeatures.features as f}
-  {#if f.dataset == name}
-    <JsonView json={f.properties} />
-  {/if}
-{/each}

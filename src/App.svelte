@@ -12,6 +12,7 @@
   import Layout from "./Layout.svelte";
   import DatasetLayers from "./DatasetLayers.svelte";
   import LayerControl from "./LayerControl.svelte";
+  import DiffJSON from "./DiffJSON.svelte";
   import { removeIdenticalFeatures } from "./diff";
 
   // Vivid from https://carto.com/carto-colors/
@@ -174,14 +175,12 @@
         filename={filenameA}
         name="a"
         bind:opacity={opacityA}
-        {pinnedFeatures}
         color={colorA}
       />
       <LayerControl
         filename={filenameB}
         name="b"
         bind:opacity={opacityB}
-        {pinnedFeatures}
         color={colorB}
       />
     {/if}
@@ -190,9 +189,12 @@
         filename={filenameDiff}
         name="diff"
         bind:opacity={opacityDiff}
-        {pinnedFeatures}
         color={colorDiff}
       />
+    {/if}
+
+    {#if pinnedFeatures.features.length == 2}
+      <DiffJSON a={pinnedFeatures.features[0]} b={pinnedFeatures.features[1]} />
     {/if}
   </div>
   <div slot="main" style="position:relative; width: 100%; height: 100vh;">
