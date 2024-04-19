@@ -12,7 +12,6 @@ export function removeIdenticalFeatures(
   // TODO Set intersection isn't in Firefox yet
   let duplicates = new Set();
   for (let x of setA) {
-    console.log(x);
     if (setB.has(x)) {
       duplicates.add(x);
     }
