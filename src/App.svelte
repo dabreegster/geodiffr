@@ -51,7 +51,7 @@
   let opacityDiff = 0.5;
 
   let map: Map;
-  let pinnedFeatures: FeatureCollection = empty;
+  let pinnedFeatures: FeatureCollection = JSON.parse(JSON.stringify(empty));
 
   $: if (map) {
     map.on("click", onClick);
@@ -152,6 +152,13 @@
     gjB = gjB;
     window.alert(`Removed ${len - gjA.features.length} unchanged features`);
   }
+
+  function swap() {
+    [gjA, gjB] = [gjB, gjA];
+    [filenameA, filenameB] = [filenameB, filenameA];
+    [opacityA, opacityB] = [opacityB, opacityA];
+    pinnedFeatures = JSON.parse(JSON.stringify(empty));
+  }
 </script>
 
 <Layout>
@@ -163,14 +170,17 @@
       <input bind:this={fileInput} on:change={loadFiles} type="file" multiple />
     </label>
 
-    <div><button on:click={zoomFit}>Zoom to fit</button></div>
     <hr />
 
-    <div>
-      <button on:click={removeUnchanged}>Remove unchanged features</button>
-    </div>
-
     {#if filenameA}
+      <div>
+        <button on:click={swap}>Swap</button>
+      </div>
+      <div><button on:click={zoomFit}>Zoom to fit</button></div>
+      <div>
+        <button on:click={removeUnchanged}>Remove unchanged features</button>
+      </div>
+
       <LayerControl
         filename={filenameA}
         name="a"
